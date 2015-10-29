@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 
 public class MotionPlanner : MonoBehaviour {
 
@@ -13,7 +15,7 @@ public class MotionPlanner : MonoBehaviour {
         print("Starting");
         minimum = new Vector3(-9, 1, -9);
         maximum = new Vector3(9, 1, 9);
-        Graph g = new Graph(10, 2, Obstacles);
+        Graph g = new Graph(50, 5, Obstacles);
 	}
 
 	public class Node {
@@ -46,7 +48,6 @@ public class MotionPlanner : MonoBehaviour {
             LightComp.color = Color.magenta;
             NodeLight.transform.position = position;
             LightComp.range = 10F;
-            print(NodeLight);
         }
 		
 		public bool addNeighbor(Node neighborNode, Collider[] obstacles){
@@ -56,19 +57,16 @@ public class MotionPlanner : MonoBehaviour {
 			for(int i = 0; i < obstacles.Length; i++){
 				//don't add as closest neighbor if the neighbor node draws a line through a collider
 				if( obstacles[i].Raycast (nodeToNeighbor, out hitInfo, distance) ){
-                    print("collision");
 					return false;
 				}
 			}
             if (neighborCount < numNeighbors)
             {
-                print("initial neighbor");
                 neighbors.Add(distance, neighborNode);
                 neighborCount += 1;
             }
             else if (distance < neighbors.Keys[0])
             {
-                print("replaced neighbor");
                 neighbors.Remove(neighbors.Keys[0]);
                 neighbors.Add(distance, neighborNode);
             }
@@ -92,10 +90,17 @@ public class MotionPlanner : MonoBehaviour {
 	public class Graph {
 		public Node[] contents;
 		public int lastNode;
+
+        private Node start;
+        private Node goal;
 		
 		public Graph(){}
 		//Create a graph of N nodes with each node having k nearest neighbors
 		public Graph(int n, int k, Collider[] Obstacles){
+
+            start = new Node(GameObject.Find("Agent").transform.position, k);
+            goal = new Node(GameObject.Find("Goal").transform.position, k);
+
             contents = new Node[n];
 			for(int i = 0; i < n; i++){
 				contents[i] = new Node(minimum, maximum, k);
@@ -110,9 +115,21 @@ public class MotionPlanner : MonoBehaviour {
                         contents[i].addNeighbor(contents[j], Obstacles);
                     }
                 }
-                print(contents[i].neighbors.Count);
+                contents[i].addNeighbor(goal, Obstacles);
 			}
-		}
+            // Find neighbors for starting node
+            for (int i = 0; i < n; i++)
+            {
+                start.addNeighbor(contents[i], Obstacles);
+            }
+            start.addNeighbor(goal, Obstacles);
+
+            Solve soln = new Solve(contents, start, goal);
+            List<Node> solnList = soln.Dijkstra();
+            for (int i = 0; i < solnList.Count; i++){
+                print(solnList[i].position);
+            }
+        }
 	}
 
 
@@ -168,44 +185,50 @@ public class MotionPlanner : MonoBehaviour {
         }*/
 
 
-        public ArrayList Dijkstra()
-        {
-            System.Collections.Generic.SortedList<float, ArrayList> paths = new System.Collections.Generic.SortedList<float, ArrayList>();
+        public List<Node> Dijkstra(){
+            List<Path> paths = new List<Path>();
             float curCost;
             float newCost;
-            ArrayList curList = new ArrayList();
-            ArrayList newList;
+            List<Node> curList = new List<Node>();
+            List<Node> newList;
             Node curNode;
             Node curNeighbor;
-            curList = new ArrayList();
+            curList = new List<Node>();
             curList.Add(start);
-            paths.Add(0, curList);
+            paths.Add(new Path(0, curList));
 
             while (paths.Count > 0)
             {
-                curCost = paths.Keys[0];
-                curList = paths[curCost];
-                paths.Remove(paths.Keys[0]);
-                curNode = (Node)curList[curList.Count - 1];
+                paths.Sort((x, y) => x.distance.CompareTo(y.distance));
+                print("first: " + paths[0].distance);
+                print("last: " + paths[paths.Count - 1].distance);
+                curCost = paths[0].distance;
+                curList = paths[0].list;
+                paths.RemoveAt(0);
+                curNode = curList[curList.Count - 1];
 
                 if (curNode.neighbors.Count > 0)
                 {
                     for (int i = 0; i < curNode.neighbors.Count; i++)
                     {
-                        curNeighbor = curNode.neighbors[i];
-                        newCost = curCost + distance(curNode, curNeighbor);
-                        newList = new ArrayList();
-                        newList.AddRange(curList);
-                        newList.Add(curNeighbor);
-                        paths.Add(newCost, newList);
-                        if (curNeighbor.position == goal.position)
-                        {
-                            return newList;
-                        }
-                    }                
+                        curNeighbor = curNode.neighbors.Values[i];
+                        if (!curList.Any(f => f.position == curNeighbor.position)){
+                            newCost = curCost + distance(curNode, curNeighbor);
+                            newList = new List<Node>();
+                            newList.AddRange(curList);
+                            newList.Add(curNeighbor);
+                            paths.Add(new Path(newCost, newList));
+                            if (curNeighbor.position == goal.position)
+                            {
+                                print("returning populated list");
+                                return newList;
+                            }
+                        }                   
+                    }           
                 }
             }
-            return new ArrayList();
+            print("returning empty list");
+            return new List<Node>();
         }
 
 
@@ -230,6 +253,18 @@ public class MotionPlanner : MonoBehaviour {
         private float distance(Node n1, Node n2){
             return (n2.position - n1.position).magnitude;
         }
+
+
+        private class Path{
+            public float distance;
+            public List<Node> list;
+
+            public Path(float distanceIn, List<Node> listIn){
+                distance = distanceIn;
+                list = listIn;
+            }       
+        }
+
 
     }
 
