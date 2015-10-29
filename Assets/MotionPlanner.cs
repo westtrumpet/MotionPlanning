@@ -113,8 +113,124 @@ public class MotionPlanner : MonoBehaviour {
                 print(contents[i].neighbors.Count);
 			}
 		}
-		
-	
 	}
+
+
+    public class Solve
+    {
+        Node[] nodes;
+        Node start;
+        Node goal;
+
+        public Solve(Node[] nodesIn, Node startIn, Node goalIn){
+            nodes = nodesIn;
+            start = startIn;
+            goal = goalIn;
+        }
+
+        /*public ArrayList AStarTemp(){
+            System.Collections.Generic.SortedList<float, ArrayList> paths = new System.Collections.Generic.SortedList<float, ArrayList>();
+            float curCost;
+            ArrayList curList = new ArrayList();
+            Node curNode;
+            Node curNeighbor;
+            float g;
+            float h;
+            System.Collections.Generic.SortedList<float, Node> f;
+            // Populate branches of the graph with the neighbors of "Start"
+            for (int i = 0; i < start.neighbors.Count; i ++){
+                curList = new ArrayList();
+                curList.Add(start.neighbors[i]);
+                paths.Add(distance(start, start.neighbors[i]), curList);
+            }
+            while (paths.Count > 0){
+                curCost = paths.Keys[0];
+                curList = paths[curCost];
+                paths.Remove(paths.Keys[0]);
+                curNode = (Node)curList[curList.Count - 1];
+                if (curNode == goal){
+                    return curList;
+                }
+                f = new System.Collections.Generic.SortedList<float, Node>();
+                if (curNode.neighbors.Count > 0){
+                    for (int i = 0; i < curNode.neighbors.Count; i++)
+                    {
+                        curNeighbor = curNode.neighbors[i];
+                        h = curCost + distance(curNode, curNeighbor);
+                        g = distance(curNeighbor, goal);                                       
+                        f.Add(g + h, curNeighbor);
+                    }
+                    curList.Add(paths.Values[0]);
+                    paths.Add(f.Keys[0], curList);
+                }
+            }
+            return new ArrayList();
+        }*/
+
+
+        public ArrayList Dijkstra()
+        {
+            System.Collections.Generic.SortedList<float, ArrayList> paths = new System.Collections.Generic.SortedList<float, ArrayList>();
+            float curCost;
+            float newCost;
+            ArrayList curList = new ArrayList();
+            ArrayList newList;
+            Node curNode;
+            Node curNeighbor;
+            curList = new ArrayList();
+            curList.Add(start);
+            paths.Add(0, curList);
+
+            while (paths.Count > 0)
+            {
+                curCost = paths.Keys[0];
+                curList = paths[curCost];
+                paths.Remove(paths.Keys[0]);
+                curNode = (Node)curList[curList.Count - 1];
+
+                if (curNode.neighbors.Count > 0)
+                {
+                    for (int i = 0; i < curNode.neighbors.Count; i++)
+                    {
+                        curNeighbor = curNode.neighbors[i];
+                        newCost = curCost + distance(curNode, curNeighbor);
+                        newList = new ArrayList();
+                        newList.AddRange(curList);
+                        newList.Add(curNeighbor);
+                        paths.Add(newCost, newList);
+                        if (curNeighbor.position == goal.position)
+                        {
+                            return newList;
+                        }
+                    }                
+                }
+            }
+            return new ArrayList();
+        }
+
+
+
+        public ArrayList AStar(){
+            ArrayList open = new ArrayList();
+            ArrayList closed = new ArrayList();
+
+
+            return new ArrayList();
+        }
+
+
+
+        private class ANode {
+
+
+
+
+        }
+
+        private float distance(Node n1, Node n2){
+            return (n2.position - n1.position).magnitude;
+        }
+
+    }
 
 }
