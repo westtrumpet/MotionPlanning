@@ -35,9 +35,9 @@ public class MotionPlanner : MonoBehaviour {
             while (true)
             {
                 Graph g = new Graph(20, 5, Obstacles);
-                if (g.solnList.Count > 0)
+                if (g.solnDijkstra.Count > 0)
                 {
-                    for (int i = 0; i < g.solnList.Count; i++)
+                    for (int i = 0; i < g.solnDijkstra.Count; i++)
                     {
                         //print(g.solnList[i].position);
                     }
@@ -147,13 +147,13 @@ public class MotionPlanner : MonoBehaviour {
         private Node start;
         private Node goal;
 
-        public List<Node> solnList;
+        public List<Node> solnDijkstra, solnAStar;
 
         public Graph(){}
 		//Create a graph of N nodes with each node having k nearest neighbors
 		public Graph(int n, int k, Collider[] Obstacles){
 
-            start = new Node(GameObject.Find("Agent").transform.position, k);
+            start = new Node(GameObject.Find("Start").transform.position, k);
             goal = new Node(GameObject.Find("Goal").transform.position, k);
 
             contents = new Node[n];
@@ -179,63 +179,22 @@ public class MotionPlanner : MonoBehaviour {
             }
             start.addNeighbor(goal, Obstacles);
 
-            Solve soln = new Solve(contents, start, goal);
-            solnList = soln.Dijkstra();               
+            Solve soln = new Solve(start, goal);
+            solnDijkstra = soln.Dijkstra();
+            solnAStar = soln.AStar();        
         }
 	}
 
 
     public class Solve
     {
-        Node[] nodes;
         Node start;
         Node goal;
 
-        public Solve(Node[] nodesIn, Node startIn, Node goalIn){
-            nodes = nodesIn;
+        public Solve(Node startIn, Node goalIn){
             start = startIn;
             goal = goalIn;
         }
-
-        /*public ArrayList AStarTemp(){
-            System.Collections.Generic.SortedList<float, ArrayList> paths = new System.Collections.Generic.SortedList<float, ArrayList>();
-            float curCost;
-            ArrayList curList = new ArrayList();
-            Node curNode;
-            Node curNeighbor;
-            float g;
-            float h;
-            System.Collections.Generic.SortedList<float, Node> f;
-            // Populate branches of the graph with the neighbors of "Start"
-            for (int i = 0; i < start.neighbors.Count; i ++){
-                curList = new ArrayList();
-                curList.Add(start.neighbors[i]);
-                paths.Add(distance(start, start.neighbors[i]), curList);
-            }
-            while (paths.Count > 0){
-                curCost = paths.Keys[0];
-                curList = paths[curCost];
-                paths.Remove(paths.Keys[0]);
-                curNode = (Node)curList[curList.Count - 1];
-                if (curNode == goal){
-                    return curList;
-                }
-                f = new System.Collections.Generic.SortedList<float, Node>();
-                if (curNode.neighbors.Count > 0){
-                    for (int i = 0; i < curNode.neighbors.Count; i++)
-                    {
-                        curNeighbor = curNode.neighbors[i];
-                        h = curCost + distance(curNode, curNeighbor);
-                        g = distance(curNeighbor, goal);                                       
-                        f.Add(g + h, curNeighbor);
-                    }
-                    curList.Add(paths.Values[0]);
-                    paths.Add(f.Keys[0], curList);
-                }
-            }
-            return new ArrayList();
-        }*/
-
 
         public List<Node> Dijkstra(){
             List<Path> paths = new List<Path>();
@@ -288,27 +247,59 @@ public class MotionPlanner : MonoBehaviour {
 
 
 
-        public ArrayList AStar(){
-            ArrayList open = new ArrayList();
-            ArrayList closed = new ArrayList();
+        public List<Node> AStar(){
+            List<Path> paths = new List<Path>();
+            float curCost;
+            float newCost;
+            List<Node> curList = new List<Node>();
+            List<Node> newList;
+            Node curNode;
+            Node curNeighbor;
+            curList = new List<Node>();
+            curList.Add(start);
+            paths.Add(new Path(0, curList));
 
+            int maxPaths = 0;
 
-            return new ArrayList();
-        }
+            while (paths.Count > 0 && paths.Count < 200)
+            {
+                if (paths.Count > maxPaths)
+                {
+                    maxPaths = paths.Count;
+                }
+                paths.Sort((x, y) => x.distance.CompareTo(y.distance));
+                curCost = paths[0].distance;
+                curList = paths[0].list;
+                paths.RemoveAt(0);
+                curNode = curList[curList.Count - 1];
 
-
-
-        private class ANode {
-
-
-
-
+                if (curNode.neighbors.Count > 0)
+                {
+                    for (int i = 0; i < curNode.neighbors.Count; i++)
+                    {
+                        curNeighbor = curNode.neighbors.Values[i];
+                        if (!curList.Any(f => f.position == curNeighbor.position))
+                        {
+                            newCost = curCost + distance(curNode, curNeighbor);
+                            newList = new List<Node>();
+                            newList.AddRange(curList);
+                            newList.Add(curNeighbor);
+                            paths.Add(new Path(newCost, newList));
+                            if (curNeighbor.position == goal.position)
+                            {
+                                print("max size: " + maxPaths);
+                                return newList;
+                            }
+                        }
+                    }
+                }
+            }
+            return new List<Node>();
         }
 
         private float distance(Node n1, Node n2){
             return (n2.position - n1.position).magnitude;
         }
-
 
         private class Path{
             public float distance;
@@ -319,8 +310,5 @@ public class MotionPlanner : MonoBehaviour {
                 list = listIn;
             }       
         }
-
-
     }
-
 }
