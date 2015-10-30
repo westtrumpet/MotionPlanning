@@ -3,15 +3,21 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 public class MotionPlanner : MonoBehaviour {
 
 	public GameObject Goal;
 	public GameObject Agent;
+    public GameObject StartObj;
 	public Collider[] Obstacles;
 	public static Vector3 minimum;
 	public static Vector3 maximum;
     public static List<Bounds> ConfigSpace;
+    public GameObject startX;
+    public GameObject startY;
+    public GameObject goalX;
+    public GameObject goalY;
 
 	void Start () {
         print("Starting");
@@ -42,11 +48,13 @@ public class MotionPlanner : MonoBehaviour {
                 }
             }
         }
-        else if (Input.GetKeyDown("g"))
-        {
-            //MessageBox.Show();
-        }
+    }
 
+    public void updatePos()
+    {
+        Agent.transform.position = new Vector3(startX.GetComponent<Dropdown>().value - 9, 1, startY.GetComponent<Dropdown>().value - 9);
+        Goal.transform.position = new Vector3(goalX.GetComponent<Dropdown>().value - 9, 1, goalY.GetComponent<Dropdown>().value - 9);
+        StartObj.transform.position = Agent.transform.position;
     }
 
     public void buildConfigSpace()
