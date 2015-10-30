@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.Events;
 
 public class MotionPlanner : MonoBehaviour {
 
@@ -17,23 +18,35 @@ public class MotionPlanner : MonoBehaviour {
         minimum = new Vector3(-9, 1, -9);
         maximum = new Vector3(9, 1, 9);
         ConfigSpace = new List<Bounds>();
-        buildConfigSpace();
+        buildConfigSpace();         
+    }
 
-        while (true){
-            Graph g = new Graph(20, 5, Obstacles);
-            if (g.solnList.Count > 0)
+    void Update()
+    {
+        // Run Dijkstra's algorithm
+        if (Input.GetKeyDown("d"))
+        {
+            while (true)
             {
-                for (int i = 0; i < g.solnList.Count; i++)
+                Graph g = new Graph(20, 5, Obstacles);
+                if (g.solnList.Count > 0)
                 {
-                    //print(g.solnList[i].position);
+                    for (int i = 0; i < g.solnList.Count; i++)
+                    {
+                        //print(g.solnList[i].position);
+                    }
+                    break;
                 }
-                break;
-            }
-            else
-            {
+                else
+                {
+                }
             }
         }
-        
+        else if (Input.GetKeyDown("g"))
+        {
+            //MessageBox.Show();
+        }
+
     }
 
     public void buildConfigSpace()
