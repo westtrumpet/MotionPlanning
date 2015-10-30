@@ -15,7 +15,7 @@ public class MotionPlanner : MonoBehaviour {
         print("Starting");
         minimum = new Vector3(-9, 1, -9);
         maximum = new Vector3(9, 1, 9);
-        Graph g = new Graph(50, 5, Obstacles);
+        Graph g = new Graph(20, 5, Obstacles);
 	}
 
 	public class Node {
@@ -125,10 +125,19 @@ public class MotionPlanner : MonoBehaviour {
             start.addNeighbor(goal, Obstacles);
 
             Solve soln = new Solve(contents, start, goal);
-            List<Node> solnList = soln.Dijkstra();
-            for (int i = 0; i < solnList.Count; i++){
-                print(solnList[i].position);
-            }
+            for (int i = 0; i < 50; i ++){
+                List<Node> solnList = soln.Dijkstra();
+                if (solnList.Count > 0){
+                    for (int j = 0; j < solnList.Count; j++)
+                    {
+                        print(solnList[j].position);
+                    }
+                    break;
+                }
+                else{
+                    print("Empty return");
+                }
+            }                    
         }
 	}
 
@@ -197,11 +206,15 @@ public class MotionPlanner : MonoBehaviour {
             curList.Add(start);
             paths.Add(new Path(0, curList));
 
-            while (paths.Count > 0)
+            int maxPaths = 0;
+
+            while (paths.Count > 0 && paths.Count < 200)
             {
+                if (paths.Count > maxPaths)
+                {
+                    maxPaths = paths.Count;
+                }
                 paths.Sort((x, y) => x.distance.CompareTo(y.distance));
-                print("first: " + paths[0].distance);
-                print("last: " + paths[paths.Count - 1].distance);
                 curCost = paths[0].distance;
                 curList = paths[0].list;
                 paths.RemoveAt(0);
@@ -220,11 +233,12 @@ public class MotionPlanner : MonoBehaviour {
                             paths.Add(new Path(newCost, newList));
                             if (curNeighbor.position == goal.position)
                             {
+                                print("max size: " + maxPaths);
                                 print("returning populated list");
                                 return newList;
                             }
-                        }                   
-                    }           
+                        }                
+                    }     
                 }
             }
             print("returning empty list");
