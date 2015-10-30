@@ -10,15 +10,47 @@ public class MotionPlanner : MonoBehaviour {
 	public Collider[] Obstacles;
 	public static Vector3 minimum;
 	public static Vector3 maximum;
+    public static List<Transform> ConfigSpace;
 
 	void Start () {
         print("Starting");
         minimum = new Vector3(-9, 1, -9);
         maximum = new Vector3(9, 1, 9);
-        Graph g = new Graph(20, 5, Obstacles);
-	}
+        ConfigSpace = new List<Transform>();
+        buildConfigSpace();
 
-	public class Node {
+        while (true){
+            Graph g = new Graph(20, 5, Obstacles);
+            if (g.solnList.Count > 0)
+            {
+                for (int i = 0; i < g.solnList.Count; i++)
+                {
+                    //print(g.solnList[i].position);
+                }
+                break;
+            }
+            else
+            {
+            }
+        }
+        
+    }
+
+    public void buildConfigSpace()
+    {
+        print("Agent Bounts: " + Agent.GetComponent<Collider>().bounds);
+        print("size of Obstacles: " + Obstacles.Length);
+        Transform agentT = Agent.transform;
+        foreach (Collider c in Obstacles)
+        {
+            Bounds b = new Bounds(c.bounds.center, (c.bounds.extents + Agent.GetComponent<Collider>().bounds.extents));
+            print("Bounds: " + c.bounds);
+            print("New Bounds: " + b);
+            ConfigSpace.Add(c.gameObject.transform);
+        }
+    }
+
+    public class Node {
 		public Vector3 position;
         public System.Collections.Generic.SortedList<float, Node> neighbors = new System.Collections.Generic.SortedList<float, Node>();
 		private int neighborCount = 0;
@@ -93,8 +125,10 @@ public class MotionPlanner : MonoBehaviour {
 
         private Node start;
         private Node goal;
-		
-		public Graph(){}
+
+        public List<Node> solnList;
+
+        public Graph(){}
 		//Create a graph of N nodes with each node having k nearest neighbors
 		public Graph(int n, int k, Collider[] Obstacles){
 
@@ -125,19 +159,7 @@ public class MotionPlanner : MonoBehaviour {
             start.addNeighbor(goal, Obstacles);
 
             Solve soln = new Solve(contents, start, goal);
-            for (int i = 0; i < 50; i ++){
-                List<Node> solnList = soln.Dijkstra();
-                if (solnList.Count > 0){
-                    for (int j = 0; j < solnList.Count; j++)
-                    {
-                        print(solnList[j].position);
-                    }
-                    break;
-                }
-                else{
-                    print("Empty return");
-                }
-            }                    
+            solnList = soln.Dijkstra();               
         }
 	}
 
@@ -234,14 +256,12 @@ public class MotionPlanner : MonoBehaviour {
                             if (curNeighbor.position == goal.position)
                             {
                                 print("max size: " + maxPaths);
-                                print("returning populated list");
                                 return newList;
                             }
                         }                
                     }     
                 }
             }
-            print("returning empty list");
             return new List<Node>();
         }
 
