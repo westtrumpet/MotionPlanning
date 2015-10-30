@@ -29,7 +29,7 @@ public class MotionPlanner : MonoBehaviour {
 
     void Update()
     {
-        // Run Dijkstra's algorithm
+        // Get results from Dijkstra's algorithm
         if (Input.GetKeyDown("d"))
         {
             while (true)
@@ -37,14 +37,29 @@ public class MotionPlanner : MonoBehaviour {
                 Graph g = new Graph(20, 5, Obstacles);
                 if (g.solnDijkstra.Count > 0)
                 {
+                    print("Dijkstra's Algorithm returned with path:");
                     for (int i = 0; i < g.solnDijkstra.Count; i++)
                     {
-                        //print(g.solnList[i].position);
+                        print(g.solnDijkstra[i].position);
                     }
                     break;
                 }
-                else
+            }
+        }
+        // Get results from A* algorithm
+        else if (Input.GetKeyDown("a"))
+        {
+            while (true)
+            {
+                Graph g = new Graph(20, 5, Obstacles);
+                if (g.solnAStar.Count > 0)
                 {
+                    print("A* returned with path:");
+                    for (int i = 0; i < g.solnAStar.Count; i++)
+                    {
+                        print(g.solnAStar[i].position);
+                    }
+                    break;
                 }
             }
         }
@@ -59,15 +74,9 @@ public class MotionPlanner : MonoBehaviour {
 
     public void buildConfigSpace()
     {
-        print("Agent Bounts: " + Agent.GetComponent<Collider>().bounds);
-        print("size of Obstacles: " + Obstacles.Length);
         foreach (Collider c in Obstacles)
         {
-            //Bounds b = new Bounds(c.bounds.center, (c.bounds.extents + Agent.GetComponent<Collider>().bounds.extents));
-            print("Bounds: " + c.bounds);
-            //print("New Bounds: " + b);
             c.bounds.Expand(Agent.GetComponent<Collider>().bounds.size);
-            //ConfigSpace.Add(new Bounds(c.bounds.center, (c.bounds.size + Agent.GetComponent<Collider>().bounds.size)));
         }
     }
 
@@ -235,7 +244,6 @@ public class MotionPlanner : MonoBehaviour {
                             paths.Add(new Path(newCost, newList));
                             if (curNeighbor.position == goal.position)
                             {
-                                print("max size: " + maxPaths);
                                 return newList;
                             }
                         }                
@@ -249,15 +257,16 @@ public class MotionPlanner : MonoBehaviour {
 
         public List<Node> AStar(){
             List<Path> paths = new List<Path>();
-            float curCost;
-            float newCost;
+            float curGx;
+            float newFx;
+            float newGx;
             List<Node> curList = new List<Node>();
             List<Node> newList;
             Node curNode;
             Node curNeighbor;
             curList = new List<Node>();
             curList.Add(start);
-            paths.Add(new Path(0, curList));
+            paths.Add(new Path(0, 0, curList));
 
             int maxPaths = 0;
 
@@ -267,8 +276,8 @@ public class MotionPlanner : MonoBehaviour {
                 {
                     maxPaths = paths.Count;
                 }
-                paths.Sort((x, y) => x.distance.CompareTo(y.distance));
-                curCost = paths[0].distance;
+                paths.Sort((x, y) => x.fx.CompareTo(y.fx));
+                curGx = paths[0].gx;
                 curList = paths[0].list;
                 paths.RemoveAt(0);
                 curNode = curList[curList.Count - 1];
@@ -280,14 +289,14 @@ public class MotionPlanner : MonoBehaviour {
                         curNeighbor = curNode.neighbors.Values[i];
                         if (!curList.Any(f => f.position == curNeighbor.position))
                         {
-                            newCost = curCost + distance(curNode, curNeighbor);
+                            newGx = curGx + distance(curNode, curNeighbor);
+                            newFx = newGx + distance(curNeighbor, goal);
                             newList = new List<Node>();
                             newList.AddRange(curList);
                             newList.Add(curNeighbor);
-                            paths.Add(new Path(newCost, newList));
+                            paths.Add(new Path(newFx, newGx, newList));
                             if (curNeighbor.position == goal.position)
                             {
-                                print("max size: " + maxPaths);
                                 return newList;
                             }
                         }
@@ -302,13 +311,19 @@ public class MotionPlanner : MonoBehaviour {
         }
 
         private class Path{
-            public float distance;
+            public float distance, fx, gx;
             public List<Node> list;
 
             public Path(float distanceIn, List<Node> listIn){
                 distance = distanceIn;
                 list = listIn;
-            }       
+            }
+            public Path(float fxIn, float gxIn, List<Node> listIn)
+            {
+                fx = fxIn;
+                gx = gxIn;
+                list = listIn;
+            }
         }
     }
 }
