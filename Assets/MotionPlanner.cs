@@ -10,13 +10,13 @@ public class MotionPlanner : MonoBehaviour {
 	public Collider[] Obstacles;
 	public static Vector3 minimum;
 	public static Vector3 maximum;
-    public static List<Transform> ConfigSpace;
+    public static List<Bounds> ConfigSpace;
 
 	void Start () {
         print("Starting");
         minimum = new Vector3(-9, 1, -9);
         maximum = new Vector3(9, 1, 9);
-        ConfigSpace = new List<Transform>();
+        ConfigSpace = new List<Bounds>();
         buildConfigSpace();
 
         while (true){
@@ -40,13 +40,13 @@ public class MotionPlanner : MonoBehaviour {
     {
         print("Agent Bounts: " + Agent.GetComponent<Collider>().bounds);
         print("size of Obstacles: " + Obstacles.Length);
-        Transform agentT = Agent.transform;
         foreach (Collider c in Obstacles)
         {
-            Bounds b = new Bounds(c.bounds.center, (c.bounds.extents + Agent.GetComponent<Collider>().bounds.extents));
+            //Bounds b = new Bounds(c.bounds.center, (c.bounds.extents + Agent.GetComponent<Collider>().bounds.extents));
             print("Bounds: " + c.bounds);
-            print("New Bounds: " + b);
-            ConfigSpace.Add(c.gameObject.transform);
+            //print("New Bounds: " + b);
+            c.bounds.Expand(Agent.GetComponent<Collider>().bounds.size);
+            //ConfigSpace.Add(new Bounds(c.bounds.center, (c.bounds.size + Agent.GetComponent<Collider>().bounds.size)));
         }
     }
 
