@@ -18,9 +18,19 @@ public class MotionPlanner : MonoBehaviour {
     public GameObject startY;
     public GameObject goalX;
     public GameObject goalY;
+	public static GameObject NodePrefab;
+	public GameObject Prefab;
+	public static GameObject Lines;
+	public GameObject LinesObj;
+
+	public float speed;
+	public int pathIndex;
+	public List<Node> path;
 
 	void Start () {
         print("Starting");
+		NodePrefab = Prefab;
+		Lines = LinesObj;
         minimum = new Vector3(-9, 1, -9);
         maximum = new Vector3(9, 1, 9);
         ConfigSpace = new List<Bounds>();
@@ -32,6 +42,7 @@ public class MotionPlanner : MonoBehaviour {
         // Get results from Dijkstra's algorithm
         if (Input.GetKeyDown("d"))
         {
+			print("Djikstra");
             while (true)
             {
                 Graph g = new Graph(20, 5, Obstacles);
@@ -42,6 +53,7 @@ public class MotionPlanner : MonoBehaviour {
                     {
                         print(g.solnDijkstra[i].position);
                     }
+					path = g.solnDijkstra;
                     break;
                 }
             }
@@ -49,6 +61,7 @@ public class MotionPlanner : MonoBehaviour {
         // Get results from A* algorithm
         else if (Input.GetKeyDown("a"))
         {
+			print("A*");
             while (true)
             {
                 Graph g = new Graph(20, 5, Obstacles);
@@ -59,10 +72,17 @@ public class MotionPlanner : MonoBehaviour {
                     {
                         print(g.solnAStar[i].position);
                     }
+					path = g.solnAStar;
                     break;
                 }
             }
         }
+		float step = speed * Time.deltaTime;
+		if(path!=null)
+		{
+			if((Agent.transform.position == path[pathIndex].position) && (pathIndex!=path.Count-1))pathIndex++;
+			Agent.transform.position = Vector3.MoveTowards(Agent.transform.position, path[pathIndex].position, step);
+		}
     }
 
     public void updatePos()
@@ -187,6 +207,25 @@ public class MotionPlanner : MonoBehaviour {
                 start.addNeighbor(contents[i], Obstacles);
             }
             start.addNeighbor(goal, Obstacles);
+					
+			for (int i = 0; i < n; i++){
+				//Instantiate the node so we have a visual representation
+				Instantiate(NodePrefab, contents[i].position, Quaternion.identity);
+				Node[] neighbors = contents[i].neighbors.Values.ToArray();
+				for (int j = 0; j < k; j++){
+					//Create lines from the node to each nearest neighbor
+					//Total of i*j*2 elements
+					Lines.GetComponent<LineRenderer>().SetPosition((2*(i*neighbors.Length+j)), contents[i].position);
+					Lines.GetComponent<LineRenderer>().SetPosition((2*(i*neighbors.Length+j)+1), neighbors[j].position);  
+					//Debug.DrawLine(contents[i].position, neighbors[j].position);
+				}
+			}
+			Node[] startNeighbors = start.neighbors.Values.ToArray();
+			for (int i = 0; i < startNeighbors.Length; i++)
+			{
+				Lines.GetComponent<LineRenderer>().SetPosition((2*n*k)+2*i, startNeighbors[i].position);
+				Lines.GetComponent<LineRenderer>().SetPosition((2*n*k)+2*i+1, start.position);
+			}
 
             Solve soln = new Solve(start, goal);
             solnDijkstra = soln.Dijkstra();
